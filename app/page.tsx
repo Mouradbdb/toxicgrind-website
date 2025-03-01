@@ -6,62 +6,49 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
 export default function Home() {
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>('');
+  const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: 'easeOut', staggerChildren: 0.15 },
+      transition: { duration: 0.8, ease: 'easeOut', staggerChildren: 0.25 },
     },
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { ease: 'easeOut' } },
-  };
-
-  const navLinkVariants: Variants = {
-    hover: {
-      scale: 1.15,
-      color: '#A3E635',
-      transition: { type: 'spring', stiffness: 400, damping: 20 },
-    },
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { ease: 'easeOut', duration: 0.5 } },
   };
 
   interface Feature {
     title: string;
     desc: string;
-    color: string;
     icon: string;
   }
 
   const features: Feature[] = [
-    {
-      title: 'Savage Motivation',
-      desc: 'Get roasted into action with customizable taunts',
-      color: 'border-lime-400',
-      icon: '🔥',
-    },
-    {
-      title: 'Grind Tracker',
-      desc: 'Flex your stats with streaks and progress bars',
-      color: 'border-red-500',
-      icon: '📊',
-    },
-    {
-      title: 'Focus Sprints',
-      desc: 'Lock in with 25-min Pomodoro power sessions',
-      color: 'border-purple-500',
-      icon: '⏱️',
-    },
+    { title: 'Set Study Goals', desc: 'Plan your week with custom hours', icon: '📝' },
+    { title: 'Pomodoro Focus', desc: '25-minute sessions for max focus', icon: '⏲️' },
+    { title: 'Track Progress', desc: 'Monitor hours and streaks', icon: '📈' },
   ];
 
-  // Email validation
+  interface Screenshot {
+    src: string;
+    alt: string;
+    caption: string;
+  }
+
+  const screenshots: Screenshot[] = [
+    { src: '/screenshots/set-goals.jpg', alt: 'Set subjects and goals in StudyFlow', caption: 'Set Goals with Ease' },
+    { src: '/screenshots/pomodoro-timer.jpg', alt: 'Pomodoro timer in StudyFlow', caption: 'Master Focus Time' },
+    { src: '/screenshots/stats-tracking.jpg', alt: 'Track stats and streaks in StudyFlow', caption: 'Track Your Wins' },
+    { src: '/screenshots/subject-progress.jpg', alt: 'Subject progress and trends in StudyFlow', caption: 'See Your Growth' },
+  ];
+
   const validateEmail = (email: string): boolean => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
@@ -72,259 +59,214 @@ export default function Home() {
     setErrorMessage('');
 
     if (!validateEmail(email)) {
-      setErrorMessage('Enter a valid email, you slacker!');
+      setErrorMessage('Please enter a valid email!');
       return;
     }
 
     setStatus('submitting');
-
     try {
-      // Save to Firestore
       const docRef = await addDoc(collection(db, 'waitlist'), {
-        email: email,
-        joinedAt: serverTimestamp(), // Firebase timestamp
-        source: 'prelaunch-website', // Track where they signed up
-        status: 'pending', // For future use (e.g., confirmed, invited)
+        email,
+        joinedAt: serverTimestamp(),
+        source: 'prelaunch-website',
+        status: 'pending',
       });
-
-      console.log('User added with ID:', docRef.id); // For debugging
+      console.log('User added with ID:', docRef.id);
       setStatus('success');
       setEmail('');
-      setTimeout(() => setStatus('idle'), 5000); // Reset after 5s
+      setTimeout(() => setStatus('idle'), 5000);
     } catch (error) {
       console.error('Error adding user:', error);
       setStatus('error');
-      setErrorMessage('Failed to join the waitlist. Try again, champ!');
-      setTimeout(() => setStatus('idle'), 3000); // Reset after 3s
+      setErrorMessage('Oops! Something went wrong. Try again.');
+      setTimeout(() => setStatus('idle'), 3000);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white font-sans overflow-x-hidden">
-      {/* Navbar */}
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="fixed top-0 w-full bg-gray-900/95 backdrop-blur-md border-b border-lime-400/30 z-50 py-4 shadow-lg"
-      >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <motion.h1
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-3xl font-extrabold text-lime-400 italic tracking-tight drop-shadow-md"
-          >
-            ToxicGrind
-          </motion.h1>
-          <div className="hidden md:flex space-x-10">
-            {['Features', 'Register'].map((link) => (
-              <motion.a
-                key={link}
-                href={`#${link.toLowerCase()}`}
-                variants={navLinkVariants}
-                whileHover="hover"
-                className="text-lg font-semibold text-gray-200 hover:shadow-lime-400/20 transition-all duration-200"
-              >
-                {link}
-              </motion.a>
-            ))}
-          </div>
-          <button
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <motion.svg
-              className="w-8 h-8 text-lime-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              animate={{ rotate: isMenuOpen ? 180 : 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </motion.svg>
-          </button>
-        </div>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden bg-gray-900/95 px-6 py-4 border-t border-lime-400/20"
-          >
-            {['Features', 'Register'].map((link) => (
-              <motion.a
-                key={link}
-                href={`#${link.toLowerCase()}`}
-                variants={itemVariants}
-                whileHover={{ x: 10 }}
-                className="block py-3 text-lg font-semibold text-gray-200 hover:text-lime-400 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link}
-              </motion.a>
-            ))}
-          </motion.div>
-        )}
-      </motion.nav>
-
+    <div className="min-h-screen bg-gradient-to-br from-[#181D27] to-[#2A3240] text-[#FAFAFA] font-sans">
       {/* Hero Section */}
       <motion.section
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="min-h-screen flex items-center justify-center pt-24 pb-12 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-lime-400/10 via-transparent to-transparent"
+        className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4 py-12 sm:py-16 md:py-20 relative"
       >
-        <div className="text-center px-6 max-w-4xl">
-          <motion.h1
-            variants={itemVariants}
-            className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight bg-clip-text text-transparent bg-gradient-to-r from-lime-400 to-purple-500"
-          >
-            Grind Hard or <br /> Get Roasted
-          </motion.h1>
-          <motion.p
-            variants={itemVariants}
-            className="text-xl md:text-2xl mb-10 text-gray-200 font-medium max-w-2xl mx-auto"
-          >
-            Join the waitlist to be the first to crush it with ToxicGrind
-          </motion.p>
-          <motion.a
-            href="#register"
-            variants={itemVariants}
-            whileHover={{ scale: 1.1, boxShadow: '0 0 20px rgba(163, 230, 53, 0.5)' }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-lime-400 text-gray-900 px-10 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-lime-300 transition-all duration-300"
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#574AE2_0%,transparent_70%)] opacity-20 pointer-events-none z-0"></div>
+        <motion.h1
+          variants={itemVariants}
+          className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-[#574AE2] relative z-10 py-2 sm:py-4"
+          style={{ background: 'linear-gradient(to right, #574AE2, #F1D302)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}
+        >
+          StudyFlow
+        </motion.h1>
+        <motion.p
+          variants={itemVariants}
+          className="mt-4 sm:mt-6 text-base sm:text-lg md:text-2xl text-[#E0E0E0] max-w-xl relative z-10"
+        >
+          Master your study routine with smart goals, focused timers, and real-time progress.
+        </motion.p>
+        <motion.div variants={itemVariants} className="mt-6 sm:mt-10 relative z-10">
+          <a
+            href="#join"
+            className="inline-block bg-[#574AE2] text-[#FAFAFA] px-6 py-3 sm:px-8 sm:py-4 rounded-full font-semibold text-base sm:text-lg shadow-lg hover:bg-[#F1D302] hover:text-[#181D27] transition-all duration-300"
           >
             Join the Waitlist
-          </motion.a>
-        </div>
+          </a>
+        </motion.div>
       </motion.section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 bg-gray-800/50">
+      <section className="py-12 sm:py-16 md:py-20 bg-[#181D27]/90">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          className="max-w-7xl mx-auto px-6"
+          viewport={{ once: true, amount: 0.3 }}
+          className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8"
         >
           <motion.h2
             variants={itemVariants}
-            className="text-4xl md:text-5xl font-extrabold text-center mb-16 text-lime-400 tracking-wide"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-[#574AE2] mb-10 sm:mb-12 md:mb-16"
           >
-            What’s Coming to Kick Your Ass
+            Your Study Superpowers
           </motion.h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature: Feature) => (
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+            {features.map((feature) => (
               <motion.div
                 key={feature.title}
                 variants={itemVariants}
-                whileHover={{ y: -10, boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)' }}
-                className={`border-l-4 ${feature.color} p-6 bg-gray-900/50 rounded-xl backdrop-blur-sm hover:bg-gray-900/70 transition-colors`}
+                whileHover={{ scale: 1.05, boxShadow: '0 10px 20px rgba(87, 74, 226, 0.2)' }}
+                className="flex-1 p-4 sm:p-6 bg-[#222831] rounded-xl shadow-md border border-[#574AE2]/20"
               >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-2xl font-bold mb-3 text-white">{feature.title}</h3>
-                <p className="text-gray-300 leading-relaxed">{feature.desc}</p>
+                <div className="text-3xl sm:text-4xl mb-3 sm:mb-4 text-[#F1D302]">{feature.icon}</div>
+                <h3 className="text-lg sm:text-xl font-semibold text-[#FAFAFA]">{feature.title}</h3>
+                <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#E0E0E0]">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
         </motion.div>
       </section>
 
-      {/* Register Section */}
-      <section id="register" className="py-24 bg-gray-800/50">
+      {/* Premium Screenshots Section */}
+      <section className="py-12 sm:py-16 md:py-20 bg-[#1E252F] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#574AE2_0%,transparent_70%)] opacity-15 pointer-events-none"></div>
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          className="max-w-7xl mx-auto px-6 text-center"
+          viewport={{ once: true, amount: 0.3 }}
+          className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 text-center relative z-10"
         >
           <motion.h2
             variants={itemVariants}
-            className="text-4xl md:text-5xl font-extrabold mb-8 text-lime-400 tracking-wide"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#574AE2] mb-10 sm:mb-12 md:mb-12 tracking-wide"
           >
-            Get in Before the Grind Begins
+            Experience StudyFlow
+          </motion.h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            {screenshots.map((screenshot) => (
+              <motion.div
+                key={screenshot.src}
+                variants={itemVariants}
+                whileHover={{ scale: 1.03, boxShadow: '0 12px 24px rgba(87, 74, 226, 0.3)' }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="flex flex-col items-center bg-[#181D27]/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 shadow-lg border border-[#574AE2]/20 will-change-transform"
+              >
+                <div className="w-full max-w-[240px] sm:max-w-[280px] md:max-w-[320px]">
+                  <img
+                    src={screenshot.src}
+                    alt={screenshot.alt}
+                    className="w-full h-auto object-contain rounded-lg"
+                    onError={() => console.error(`Failed to load ${screenshot.src}`)}
+                  />
+                </div>
+                <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl font-semibold text-[#FAFAFA] tracking-tight">{screenshot.caption}</p>
+              </motion.div>
+            ))}
+          </div>
+          <motion.div variants={itemVariants} className="mt-10 sm:mt-12 md:mt-16">
+            <a
+              href="#join"
+              className="inline-block bg-gradient-to-r from-[#574AE2] to-[#F1D302] text-[#181D27] px-6 py-3 sm:px-8 sm:py-4 rounded-full font-bold text-base sm:text-lg shadow-xl hover:shadow-[0_0_15px_rgba(241,211,2,0.5)] transition-all duration-300"
+            >
+              Begin Your Journey
+            </a>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Waitlist Section */}
+      <section id="join" className="py-12 sm:py-16 md:py-24 bg-[#181D27] border-t border-[#574AE2]/30">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 text-center"
+        >
+          <motion.h2
+            variants={itemVariants}
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#574AE2] mb-6 sm:mb-8"
+          >
+            Unlock StudyFlow Early
           </motion.h2>
           <motion.p
             variants={itemVariants}
-            className="text-xl md:text-2xl text-gray-200 mb-10 font-medium max-w-2xl mx-auto"
+            className="text-base sm:text-lg md:text-lg text-[#E0E0E0] mb-8 sm:mb-10 md:mb-12 max-w-lg mx-auto"
           >
-            Drop your email to secure your spot on the waitlist
+            Join the waitlist for early access to StudyFlow’s game-changing tools.
           </motion.p>
           <motion.form
             variants={itemVariants}
             onSubmit={handleSubmit}
-            className="max-w-md mx-auto flex flex-col sm:flex-row gap-4"
+            className="flex flex-col gap-4 sm:flex-row sm:gap-6 max-w-xl mx-auto"
           >
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email, grinder"
+              placeholder="Enter your email"
               required
               disabled={status === 'submitting'}
-              className="flex-1 px-6 py-4 bg-gray-900/50 border border-gray-700 rounded-full text-gray-200 placeholder-gray-500 focus:outline-none focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 transition-all duration-200 disabled:opacity-50"
+              className="flex-1 px-4 py-3 sm:px-6 sm:py-4 bg-[#1E252F] border border-[#574AE2]/30 rounded-lg text-[#FAFAFA] placeholder-[#B0B0B0] text-sm sm:text-base focus:outline-none focus:border-[#574AE2] focus:shadow-[0_0_8px_rgba(87,74,226,0.4)] transition-all duration-300"
             />
             <motion.button
               type="submit"
               disabled={status === 'submitting'}
-              whileHover={{ y: -5, boxShadow: '0 10px 20px rgba(163, 230, 53, 0.3)' }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-lime-400 text-gray-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-lime-300 transition-all duration-300 shadow-md disabled:bg-lime-600 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.05, boxShadow: '0 0 10px rgba(87, 74, 226, 0.3)' }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-[#574AE2] text-[#FAFAFA] px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold text-sm sm:text-lg hover:bg-[#6A5BFF] transition-all duration-300 disabled:bg-[#574AE2]/50 disabled:cursor-not-allowed shadow-md"
             >
               {status === 'submitting' ? 'Joining...' : 'Join Now'}
             </motion.button>
           </motion.form>
           {status === 'success' && (
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 text-lime-400 font-medium"
+              className="mt-4 sm:mt-6 text-[#574AE2] font-medium text-sm sm:text-base"
             >
-              You’re on the waitlist! Get ready to dominate.
+              You’re in! Get ready to flow.
             </motion.p>
           )}
           {status === 'error' && (
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 text-red-400 font-medium"
+              className="mt-4 sm:mt-6 text-[#F05252] font-medium text-sm sm:text-base"
             >
               {errorMessage}
             </motion.p>
           )}
           <motion.p
             variants={itemVariants}
-            className="mt-6 text-gray-400 text-sm max-w-lg mx-auto"
+            className="mt-6 sm:mt-8 text-xs sm:text-sm text-[#A0A0A0]"
           >
-            We’ll only email you about the launch. No spam, just savage updates.
+            © {new Date().getFullYear()} StudyFlow. All rights reserved.
           </motion.p>
         </motion.div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-10 bg-gray-900 border-t border-gray-800/50">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-gray-400 text-sm">
-            © {new Date().getFullYear()} ToxicGrind. All rights reserved.
-          </p>
-          <div className="mt-4 flex justify-center gap-6">
-            {['Twitter', 'Instagram', 'Discord'].map((social) => (
-              <a
-                key={social}
-                href={`#${social.toLowerCase()}`}
-                className="text-gray-400 hover:text-lime-400 transition-colors"
-              >
-                {social}
-              </a>
-            ))}
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
